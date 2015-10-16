@@ -14,6 +14,7 @@ import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.config.DefaultMuleConfiguration;
+import org.mule.processor.chain.SubFlowMessageProcessor;
 
 import java.util.Collections;
 import java.util.Map;
@@ -41,8 +42,19 @@ public class MessageProcessingFlowStackManager extends LocationExecutionContextP
     {
         if (DefaultMuleConfiguration.isFlowCallStacks())
         {
-            notification.getSource().getFlowCallStack().peek().addInvokedMessageProcessor(
+            ((DefaultFlowCallStack) notification.getSource().getFlowCallStack()).addInvokedMessageProcessor(
                     resolveProcessorRepresentation(muleContext.getConfiguration().getId(), notification.getProcessorPath(), notification.getProcessor()));
+        }
+    }
+
+    public void onMessageProcessorNotificationPostInvoke(MessageProcessorNotification notification)
+    {
+        if (DefaultMuleConfiguration.isFlowCallStacks())
+        {
+            if (notification.getProcessor() instanceof SubFlowMessageProcessor)
+            {
+                onFlowComplete(notification.getSource());
+            }
         }
     }
 
@@ -74,7 +86,7 @@ public class MessageProcessingFlowStackManager extends LocationExecutionContextP
     {
         if (DefaultMuleConfiguration.isFlowCallStacks())
         {
-            muleEvent.getFlowCallStack().push(new DefaultFlowStackElement(flowName));
+            ((DefaultFlowCallStack) muleEvent.getFlowCallStack()).push(new DefaultFlowStackElement(flowName));
         }
     }
 
@@ -82,7 +94,7 @@ public class MessageProcessingFlowStackManager extends LocationExecutionContextP
     {
         if (DefaultMuleConfiguration.isFlowCallStacks())
         {
-            muleEvent.getFlowCallStack().pop();
+            ((DefaultFlowCallStack) muleEvent.getFlowCallStack()).pop();
         }
     }
 

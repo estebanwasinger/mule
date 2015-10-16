@@ -6,13 +6,17 @@
  */
 package org.mule.processor.chain;
 
+import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.processor.InterceptingMessageProcessor;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.api.processor.MessageProcessorChain;
 import org.mule.api.processor.MessageProcessorPathElement;
+import org.mule.context.notification.MessageProcessingFlowStackManager;
 import org.mule.util.NotificationUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -49,6 +53,28 @@ public class SubflowInterceptingChainLifecycleWrapper extends InterceptingChainL
             }
         }
         NotificationUtils.addMessageProcessorPathElements(filteredMessageProcessorList, subprocessors);
+    }
+
+    @Override
+    public MuleEvent process(MuleEvent event) throws MuleException
+    {
+        Collection<MessageProcessingFlowStackManager> flowStackManagers = event.getMuleContext().getRegistry().lookupObjects(MessageProcessingFlowStackManager.class);
+        for (MessageProcessingFlowStackManager messageProcessingFlowStackManager : flowStackManagers)
+        {
+            messageProcessingFlowStackManager.onFlowStart(event, getSubFlowName());
+        }
+
+        try
+        {
+            return super.process(event);
+        }
+        finally
+        {
+            for (MessageProcessingFlowStackManager messageProcessingFlowStackManager : flowStackManagers)
+            {
+                messageProcessingFlowStackManager.onFlowComplete(event);
+            }
+        }
     }
 
     @Override
