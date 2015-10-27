@@ -6,8 +6,10 @@
  */
 package org.mule.execution;
 
+import static org.mule.context.notification.BaseConnectorMessageNotification.MESSAGE_ERROR_RESPONSE;
 import static org.mule.context.notification.BaseConnectorMessageNotification.MESSAGE_RECEIVED;
 import static org.mule.context.notification.BaseConnectorMessageNotification.MESSAGE_RESPONSE;
+
 import org.mule.DefaultMuleEvent;
 import org.mule.NonBlockingVoidMuleEvent;
 import org.mule.OptimizedRequestContext;
@@ -85,6 +87,7 @@ public class AsyncResponseFlowProcessingPhase implements MessageProcessPhase<Asy
             }
             catch (final MessagingException e)
             {
+                fireNotification(null, MESSAGE_ERROR_RESPONSE);
                 template.sendFailureResponseToClient(e, createSendFailureResponseCompletationCallback(phaseResultNotifier));
             }
         }
